@@ -55,14 +55,14 @@ def enumerate_backups_to_upload(backup_dir, backup_ext):
     return latest_files.values()
 
 
-def encrypt_file(file_path, enc_key):
+def encrypt_file(file_path, enc_key, host):
     # Encrypt the file
     print(f"\nEncrypting:\n\t{file_path}")
     with open(file_path, mode="rb") as data:
         file_data = data.read()
         f = Fernet(enc_key)
         encrypted_data = f.encrypt(file_data)
-        enc_path = f"{file_path}.enc"
+        enc_path = f"{file_path}.{host}.enc"
         with open(enc_path, mode="wb") as data:
             data.write(encrypted_data)
         print("Done")
@@ -73,7 +73,9 @@ def upload_files(container_client, backup_dir, enc_key, files_to_upload):
     try:
         for file in files_to_upload:
             file_path = os.path.join(backup_dir, file)
-            enc_path = encrypt_file(file_path, enc_key)
+            with open(f"{file_path}.notes", mode="rb") as data:
+                host = data.read()
+            enc_path = encrypt_file(file_path, enc_key, host)
             blob_name = os.path.basename(enc_path).replace('_', '-')
             print(f"Uploading to blob: {blob_name} in container: {container_client.container_name}")
             blob_client = container_client.get_blob_client(blob=blob_name)
