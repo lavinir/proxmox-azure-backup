@@ -78,12 +78,16 @@ def upload_files(container_client, backup_dir, enc_key, files_to_upload):
             enc_path = encrypt_file(file_path, enc_key, host)
             blob_name = os.path.basename(enc_path).replace('_', '-')
             blob_client = container_client.get_blob_client(blob=blob_name)
-            print(f"\nUploading:\n\t{enc_path}")
-            print(f"Target blob: {blob_name}. Target container: {container_client.container_name}")
-            with open(enc_path, mode="rb") as data:
-                blob_client.upload_blob(data)
+            if blob_client.exists() == False:
+                print(f"\nUploading:\n\t{enc_path}")
+                print(f"Target blob: {blob_name}. Target container: {container_client.container_name}")
+                with open(enc_path, mode="rb") as data:
+                    blob_client.upload_blob(data)
+                print("Upload complete")
+            else:
+                print("Backup already exists in blob storage")
+
             # Delete the file after upload
-            print("Upload complete")
             os.remove(enc_path)
             print("Deleted local file")
     except Exception as ex:
