@@ -54,11 +54,15 @@ def enumerate_backups_to_upload(backup_dir, backup_ext):
 
     return latest_files.values()
 
+def build_zip_filename(file_path, host):
+    # Create a filename for the zip file
+    # Format: <filename>.<host>.zip
+    return f"{file_path}.{host}.zip"
 
 def zip_and_encrypt_file(file_path, password, host):
     # Encrypt the file
     print(f"\nZipping and Encrypting:\n\t{file_path}")
-    zip_file_path = f"{file_path}.{host}.zip"
+    zip_file_path = build_zip_filename(file_path, host)
     with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_LZMA) as zip_file:
         zip_file.setpassword(password.encode("utf-8"))
         zip_file.write(file_path)
@@ -72,10 +76,11 @@ def upload_files(container_client, backup_dir, password, files_to_upload):
             file_path = os.path.join(backup_dir, file)
             with open(f"{file_path}.notes", mode="r") as data:
                 host = data.read()
-            enc_path = zip_and_encrypt_file(file_path, password, host)
+            enc_path = build_zip_filename(file_path, host)
             blob_name = os.path.basename(enc_path).replace('_', '-')
             blob_client = container_client.get_blob_client(blob=blob_name)
             if blob_client.exists() == False:
+                zip_and_encrypt_file(file_path, password, host)
                 print(f"\nUploading:\n\t{enc_path}")
                 print(f"Target blob: {blob_name}. Target container: {container_client.container_name}")
                 with open(enc_path, mode="rb") as data:
