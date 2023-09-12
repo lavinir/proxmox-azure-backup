@@ -86,12 +86,12 @@ def upload_files(container_client, backup_dir, password, files_to_upload):
                 with open(enc_path, mode="rb") as data:
                     blob_client.upload_blob(data)
                 print("Upload complete")
+                # Delete the file after upload
+                os.remove(enc_path)
+                print("Deleted local file")
             else:
                 print("Backup already exists in blob storage")
 
-            # Delete the file after upload
-            os.remove(enc_path)
-            print("Deleted local file")
     except Exception as ex:
         print('Exception:')
         print(ex)
